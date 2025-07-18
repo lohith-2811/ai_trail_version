@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Button, TextField, CircularProgress, Alert } from '@mui/material';
+import { Box, Typography, Button, CircularProgress, Alert } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { auth } from '../firebase';
-// --- 1. Import new methods ---
-import { signInWithEmailAndPassword, signOut, sendEmailVerification, reload } from 'firebase/auth';
+import { signOut, sendEmailVerification, reload } from 'firebase/auth';
 
 export default function VerifyEmail() {
   const [email, setEmail] = useState('');
@@ -11,14 +10,12 @@ export default function VerifyEmail() {
   const [isVerified, setIsVerified] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  // --- 2. Add state for user feedback and cooldowns ---
   const [info, setInfo] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
 
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Cooldown timer effect for the resend button
   useEffect(() => {
     let timer;
     if (resendCooldown > 0) {
@@ -26,7 +23,6 @@ export default function VerifyEmail() {
     }
     return () => clearTimeout(timer);
   }, [resendCooldown]);
-
 
   useEffect(() => {
     const stateEmail = location.state?.email || '';
@@ -36,7 +32,6 @@ export default function VerifyEmail() {
 
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
-        // --- 3. Reload user data to get the latest emailVerified status ---
         await user.reload();
         setIsVerified(user.emailVerified);
         setEmail((prev) => prev || user.email || '');
@@ -49,10 +44,10 @@ export default function VerifyEmail() {
     return () => unsubscribe();
   }, [navigate, location.state]);
 
-  const handleLogin = async () => { /* ... (no changes needed here) ... */ };
-
   const handleBackToLogin = async () => {
-    setLoading(true); setError(''); setInfo('');
+    setLoading(true);
+    setError('');
+    setInfo('');
     try {
       await signOut(auth);
     } catch (err) {
@@ -61,15 +56,16 @@ export default function VerifyEmail() {
     }
   };
 
-  // --- 4. Handler to resend the verification email ---
   const handleResendVerification = async () => {
-    setLoading(true); setError(''); setInfo('');
+    setLoading(true);
+    setError('');
+    setInfo('');
     const user = auth.currentUser;
     if (user) {
       try {
         await sendEmailVerification(user);
         setInfo('A new verification email has been sent. Please check your inbox.');
-        setResendCooldown(60); // Set a 60-second cooldown
+        setResendCooldown(60);
       } catch (err) {
         setError('Failed to send verification email. Please try again later.');
       } finally {
@@ -78,9 +74,10 @@ export default function VerifyEmail() {
     }
   };
 
-  // --- 5. Handler to check verification status again ---
   const handleRefreshStatus = async () => {
-    setLoading(true); setError(''); setInfo('');
+    setLoading(true);
+    setError('');
+    setInfo('');
     const user = auth.currentUser;
     if (user) {
       try {
@@ -92,13 +89,12 @@ export default function VerifyEmail() {
           setError('Email is still not verified. Please check your inbox or try resending the email.');
         }
       } catch (err) {
-         setError('Failed to refresh status. Please try again.');
+        setError('Failed to refresh status. Please try again.');
       } finally {
         setLoading(false);
       }
     }
   };
-
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', bgcolor: '#111827', color: '#fff', p: 2 }}>
@@ -113,12 +109,10 @@ export default function VerifyEmail() {
             {isVerified ? (
               <>
                 <Typography variant="body2" sx={{ mb: 2, color: 'lightgreen' }}>
-                  Your email is verified! Enter your password to sign in.
+                  Your email is verified! You can now log in.
                 </Typography>
-                {/* ... The verified login form ... */}
               </>
             ) : (
-              // --- 6. Updated UI for the unverified state ---
               <>
                 <Typography variant="body1" sx={{ mb: 2 }}>
                   A verification link has been sent to your email: <strong>{email}</strong>
@@ -146,15 +140,15 @@ export default function VerifyEmail() {
                 </Button>
               </>
             )}
-             <Button
-                fullWidth
-                variant="text"
-                onClick={handleBackToLogin}
-                disabled={loading}
-                sx={{ mt: 2, color: 'grey' }}
-              >
-                Back to Login
-              </Button>
+            <Button
+              fullWidth
+              variant="text"
+              onClick={handleBackToLogin}
+              disabled={loading}
+              sx={{ mt: 2, color: 'grey' }}
+            >
+              Back to Login
+            </Button>
           </>
         )}
         {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}

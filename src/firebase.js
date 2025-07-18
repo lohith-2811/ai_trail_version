@@ -4,20 +4,21 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-// Your Firebase configuration object
+// Firebase configuration from environment variables
 const firebaseConfig = {
-  apiKey: "AIzaSyAsJgTPeVLp2U6rS78T0DmlsxMeX9X9wHw",
-  authDomain: "jai-gpt.firebaseapp.com",
-  projectId: "jai-gpt",
-  storageBucket: "jai-gpt.appspot.com",
-  messagingSenderId: "1041993257138",
-  appId: "1:1041993257138:web:ee5bb9f802d1215af8f9ab",
-  measurementId: "G-GEGKYVKQ51"
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
+  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID,
 };
+
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Export the auth instance for use in other components
+// Export Firebase services
 export const auth = getAuth(app);
 export const db = getFirestore(app);

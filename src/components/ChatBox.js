@@ -13,7 +13,10 @@ import { useAuth } from '../contexts/AuthContext';
 import { auth } from '../firebase';
 
 // --- Axios Setup ---
-const api = axios.create({ baseURL: 'http://localhost:5000/api' });
+const api = axios.create({
+  baseURL: process.env.REACT_APP_API_BASE_URL,
+});
+
 api.interceptors.request.use(async (config) => {
   const user = auth.currentUser;
   if (user) {
@@ -264,7 +267,7 @@ export default function ChatBox() {
 
         {/* Footer */}
         <Typography variant="caption" sx={{ mt: 2, textAlign: 'center', color: darkMode ? '#9ca3af' : '#6b7280' }}>
-          Created by <a href="https://jairisys.tech" target="_blank" rel="noopener noreferrer" style={{ color: darkMode ? '#60a5fa' : '#2563eb' }}>Jairisys.tech</a>, Developed by Lohith Naveen
+          Created by <a href="https://jairisys.tech" target="_blank" rel="noopener noreferrer" style={{ color: darkMode ? '#60a5fa' : '#2563eb' }}>Jairisys.tech</a>, Creafted with ❤️.
         </Typography>
       </Box>
     </Box>
