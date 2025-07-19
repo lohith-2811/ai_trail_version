@@ -276,8 +276,8 @@ export default function ChatBox() {
         }}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-          <Box sx={{ p: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Button onClick={handleNewChat} startIcon={<Add />} variant="outlined" sx={{ mb: 0, color: 'inherit', borderColor: 'inherit', fontSize: '14px' }}>
+          <Box sx={{ p: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: '40px' }}>
+            <Button onClick={handleNewChat} startIcon={<Add />} variant="outlined" sx={{ mb: 0, color: 'inherit', borderColor: 'inherit', fontSize: '12px' }}>
               New Chat
             </Button>
             {!isMobile && (
@@ -287,7 +287,7 @@ export default function ChatBox() {
             )}
           </Box>
           <Divider sx={{ bgcolor: darkMode ? '#374151' : '#e5e7eb' }} />
-          <List sx={{ flexGrow: 1, overflowY: 'auto', maxHeight: 'calc(100vh - 140px)', p: 0 }}>
+          <List sx={{ flexGrow: 1, overflowY: 'auto', maxHeight: 'calc(100vh - 180px)', p: 0 }}>
             {conversations.length > 0 ? (
               conversations.map(convo => (
                 <ListItem key={convo._id} disablePadding sx={{ my: 0.5 }}>
@@ -299,7 +299,7 @@ export default function ChatBox() {
                     selected={currentConversationId === convo._id}
                     sx={{ borderRadius: 1, '&.Mui-selected': { bgcolor: darkMode ? '#374151' : '#e5e7eb' }, py: 0.5 }}
                   >
-                    <ListItemText primary={convo.title} primaryTypographyProps={{ noWrap: true, sx: { pr: 4, fontSize: '14px' } }} />
+                    <ListItemText primary={convo.title} primaryTypographyProps={{ noWrap: true, sx: { pr: 4, fontSize: '12px' } }} />
                     <IconButton
                       onClick={(e) => handleDeleteConversation(e, convo._id)}
                       size="small"
@@ -317,8 +317,8 @@ export default function ChatBox() {
             )}
           </List>
           <Divider sx={{ bgcolor: darkMode ? '#374151' : '#e5e7eb' }} />
-          <Box sx={{ p: 0.5, minHeight: '60px' }}> {/* Increased minHeight for visibility */}
-            <Typography variant="body2" noWrap title={currentUser?.email || currentUser?.phoneNumber} sx={{ fontSize: '12px', mb: 0.5 }}>
+          <Box sx={{ p: 0.5, flexShrink: 0, minHeight: '80px' }}>
+            <Typography variant="body2" noWrap title={currentUser?.email || currentUser?.phoneNumber} sx={{ fontSize: '10px', mb: 0.5 }}>
               {currentUser?.email || currentUser?.phoneNumber || 'Logged In'}
             </Typography>
             <Button
@@ -326,7 +326,7 @@ export default function ChatBox() {
               variant="text"
               startIcon={<Logout />}
               onClick={handleLogout}
-              sx={{ color: darkMode ? '#f87171' : '#ef4444', justifyContent: 'flex-start', p: 0.5, fontSize: '12px' }}
+              sx={{ color: darkMode ? '#f87171' : '#ef4444', justifyContent: 'flex-start', p: 0.5, fontSize: '10px' }}
             >
               Logout
             </Button>
