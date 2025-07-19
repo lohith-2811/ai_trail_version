@@ -107,10 +107,12 @@ export default function ChatBox() {
     if (!currentUser) return;
     try {
       const res = await api.get('/conversations');
+      console.log('Fetched conversations:', res.data); // Debug log
       if (res.data && Array.isArray(res.data)) {
         setConversations(res.data);
       } else {
         setConversations([]);
+        console.log('No valid conversation data received');
       }
     } catch (error) {
       console.error("Failed to fetch conversations", error);
@@ -118,7 +120,19 @@ export default function ChatBox() {
     }
   }, [currentUser]);
 
-  useEffect(() => { fetchConversations(); }, [fetchConversations]);
+  useEffect(() => {
+    fetchConversations();
+    // Lock body scroll on mobile when sidebar is open
+    if (isMobile && isSidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [fetchConversations, isMobile, isSidebarOpen]);
+
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
   const handleNewChat = () => {
@@ -303,8 +317,8 @@ export default function ChatBox() {
             )}
           </List>
           <Divider sx={{ bgcolor: darkMode ? '#374151' : '#e5e7eb' }} />
-          <Box sx={{ p: 1 }}>
-            <Typography variant="body2" noWrap title={currentUser?.email || currentUser?.phoneNumber} sx={{ fontSize: '12px' }}>
+          <Box sx={{ p: 0.5, minHeight: '60px' }}> {/* Increased minHeight for visibility */}
+            <Typography variant="body2" noWrap title={currentUser?.email || currentUser?.phoneNumber} sx={{ fontSize: '12px', mb: 0.5 }}>
               {currentUser?.email || currentUser?.phoneNumber || 'Logged In'}
             </Typography>
             <Button
@@ -312,7 +326,7 @@ export default function ChatBox() {
               variant="text"
               startIcon={<Logout />}
               onClick={handleLogout}
-              sx={{ color: darkMode ? '#f87171' : '#ef4444', justifyContent: 'flex-start', mt: 0.5, p: 0.5, fontSize: '12px' }}
+              sx={{ color: darkMode ? '#f87171' : '#ef4444', justifyContent: 'flex-start', p: 0.5, fontSize: '12px' }}
             >
               Logout
             </Button>
