@@ -5,7 +5,7 @@ import {
   List, ListItem, ListItemText, ListItemButton, Divider, Tooltip
 } from '@mui/material';
 import {
-  Brightness4, Brightness7, ContentCopy, Send, Check, Add, Delete, Logout
+  Brightness4, Brightness7, ContentCopy, Send, Check, Add, Delete, Logout, Menu
 } from '@mui/icons-material';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -60,7 +60,6 @@ const CodeBlock = ({ language, code }) => {
 
 // --- GPT Typing Animation ---
 const GPTTyping = () => {
-  // Custom animated GPT-style typing indicator
   return (
     <Box sx={{
       display: 'flex', alignItems: 'center', gap: 1, mb: 2,
@@ -100,6 +99,7 @@ export default function ChatBox() {
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
   const [showTyping, setShowTyping] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // State for sidebar toggle
   const chatEndRef = useRef(null);
 
   const fetchConversations = useCallback(async () => {
@@ -200,6 +200,10 @@ export default function ChatBox() {
     }
   };
 
+  const toggleSidebar = () => {
+    setIsSidebarOpen(prev => !prev);
+  };
+
   const renderMessage = (msg, index) => {
     const isUser = msg.sender === 'user';
     const align = isUser ? 'flex-end' : 'flex-start';
@@ -222,52 +226,132 @@ export default function ChatBox() {
   return (
     <Box sx={{ height: '100vh', display: 'flex', bgcolor: darkMode ? '#111827' : '#f3f4f6' }}>
       {/* Sidebar */}
-      <Box sx={{ width: 260, bgcolor: darkMode ? '#1f2937' : '#fff', color: darkMode ? '#e5e7eb' : '#1f2937', p: 1, borderRight: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`, display: 'flex', flexDirection: 'column' }}>
-        <Button onClick={handleNewChat} startIcon={<Add />} variant="outlined" sx={{ mb: 2, color: 'inherit', borderColor: 'inherit' }}>New Chat</Button>
-        <Divider sx={{ bgcolor: darkMode ? '#374151' : '#e5e7eb' }} />
-        <List sx={{ flexGrow: 1, overflowY: 'auto' }}>
-          {conversations.map(convo => (
-            <ListItem key={convo._id} disablePadding sx={{ my: 0.5 }}>
-              <ListItemButton onClick={() => handleSelectConversation(convo._id)} selected={currentConversationId === convo._id} sx={{ borderRadius: 1, '&.Mui-selected': { bgcolor: darkMode ? '#374151' : '#e5e7eb' } }}>
-                <ListItemText primary={convo.title} primaryTypographyProps={{ noWrap: true, sx: { pr: 4 } }} />
-                <IconButton onClick={(e) => handleDeleteConversation(e, convo._id)} size="small" sx={{ position: 'absolute', right: 8, color: darkMode ? '#9ca3af' : '#6b7280' }}><Tooltip title="Delete Chat"><Delete fontSize="small" /></Tooltip></IconButton>
-              </ListItemButton>
-            </ListItem>
-          ))}
-        </List>
-        <Divider sx={{ bgcolor: darkMode ? '#374151' : '#e5e7eb' }} />
-        <Box sx={{ p: 2 }}>
-          <Typography variant="body2" noWrap title={currentUser?.email || currentUser?.phoneNumber}>{currentUser?.email || currentUser?.phoneNumber || 'Logged In'}</Typography>
-          <Button fullWidth variant="text" startIcon={<Logout />} onClick={handleLogout} sx={{ color: darkMode ? '#f87171' : '#ef4444', justifyContent: 'flex-start', mt: 1, p: 1 }}>Logout</Button>
-        </Box>
+      <Box
+        sx={{
+          width: { xs: isSidebarOpen ? '260px' : '0', sm: isSidebarOpen ? '260px' : '0' },
+          bgcolor: darkMode ? '#1f2937' : '#fff',
+          color: darkMode ? '#e5e7eb' : '#1f2937',
+          p: isSidebarOpen ? 1 : 0,
+          borderRight: isSidebarOpen ? `1px solid ${darkMode ? '#374151' : '#e5e7eb'}` : 'none',
+          display: 'flex',
+          flexDirection: 'column',
+          transition: 'width 0.3s ease-in-out',
+          overflowX: 'hidden',
+          position: { xs: 'absolute', sm: 'relative' },
+          zIndex: 1200,
+          height: '100%',
+        }}
+      >
+        {isSidebarOpen && (
+          <>
+            <Button onClick={handleNewChat} startIcon={<Add />} variant="outlined" sx={{ mb: 2, color: 'inherit', borderColor: 'inherit' }}>
+              New Chat
+            </Button>
+            <Divider sx={{ bgcolor: darkMode ? '#374151' : '#e5e7eb' }} />
+            <List sx={{ flexGrow: 1, overflowY: 'auto' }}>
+              {conversations.map(convo => (
+                <ListItem key={convo._id} disablePadding sx={{ my: 0.5 }}>
+                  <ListItemButton
+                    onClick={() => {
+                      handleSelectConversation(convo._id);
+                      setIsSidebarOpen(false); // Close sidebar on mobile after selection
+                    }}
+                    selected={currentConversationId === convo._id}
+                    sx={{ borderRadius: 1, '&.Mui-selected': { bgcolor: darkMode ? '#374151' : '#e5e7eb' } }}
+                  >
+                    <ListItemText primary={convo.title} primaryTypographyProps={{ noWrap: true, sx: { pr: 4 } }} />
+                    <IconButton
+                      onClick={(e) => handleDeleteConversation(e, convo._id)}
+                      size="small"
+                      sx={{ position: 'absolute', right: 8, color: darkMode ? '#9ca3af' : '#6b7280' }}
+                    >
+                      <Tooltip title="Delete Chat">
+                        <Delete fontSize="small" />
+                      </Tooltip>
+                    </IconButton>
+                  </ListItemButton>
+                </ListItem>
+              ))}
+            </List>
+            <Divider sx={{ bgcolor: darkMode ? '#374151' : '#e5e7eb' }} />
+            <Box sx={{ p: 2 }}>
+              <Typography variant="body2" noWrap title={currentUser?.email || currentUser?.phoneNumber}>
+                {currentUser?.email || currentUser?.phoneNumber || 'Logged In'}
+              </Typography>
+              <Button
+                fullWidth
+                variant="text"
+                startIcon={<Logout />}
+                onClick={handleLogout}
+                sx={{ color: darkMode ? '#f87171' : '#ef4444', justifyContent: 'flex-start', mt: 1, p: 1 }}
+              >
+                Logout
+              </Button>
+            </Box>
+          </>
+        )}
       </Box>
 
       {/* Chat Area */}
       <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: { xs: 1, sm: 2 } }}>
         {/* Header */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h5" sx={{ fontWeight: 'bold', color: darkMode ? '#fff' : '#000' }}>Jai - Coding Assistant</Typography>
-          <IconButton onClick={() => setDarkMode(p => !p)} sx={{ color: darkMode ? '#fff' : '#000' }}>{darkMode ? <Brightness7 /> : <Brightness4 />}</IconButton>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <IconButton
+              onClick={toggleSidebar}
+              sx={{ color: darkMode ? '#fff' : '#000', mr: 1 }}
+              aria-label={isSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+            >
+              <Menu />
+            </IconButton>
+            <Typography variant="h5" sx={{ fontWeight: 'bold', color: darkMode ? '#fff' : '#000' }}>
+              Jai - Coding Assistant
+            </Typography>
+          </Box>
+          <IconButton onClick={() => setDarkMode(p => !p)} sx={{ color: darkMode ? '#fff' : '#000' }}>
+            {darkMode ? <Brightness7 /> : <Brightness4 />}
+          </IconButton>
         </Box>
 
         {/* Messages */}
         <Box sx={{ flexGrow: 1, overflowY: 'auto', p: { xs: 2, sm: 3 }, bgcolor: darkMode ? '#1f2937' : '#fff', borderRadius: 2, mb: 2, boxShadow: 1 }}>
-          {messages.length === 0 && !loading && <Typography sx={{ textAlign: 'center', color: darkMode ? '#9ca3af' : '#6b7280', fontStyle: 'italic' }}>Start a new conversation or select one from the history.</Typography>}
+          {messages.length === 0 && !loading && (
+            <Typography sx={{ textAlign: 'center', color: darkMode ? '#9ca3af' : '#6b7280', fontStyle: 'italic' }}>
+              Start a new conversation or select one from the history.
+            </Typography>
+          )}
           {messages.map((msg, idx) => renderMessage(msg, idx))}
-          {/* GPT Typing Animation instead of CircularProgress */}
           {showTyping && <GPTTyping />}
           <div ref={chatEndRef} />
         </Box>
 
         {/* Input */}
         <Box sx={{ display: 'flex', alignItems: 'center', bgcolor: darkMode ? '#374151' : '#fff', borderRadius: 2, p: 1, boxShadow: 1 }}>
-          <TextField value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder="Ask Jai anything..." multiline maxRows={5} fullWidth variant="standard" InputProps={{ disableUnderline: true, sx: { p: 1, color: darkMode ? '#fff' : '#000' } }} />
-          <Button onClick={handleSend} disabled={loading || !input.trim()} variant="contained" sx={{ bgcolor: '#2563eb', '&:hover': { bgcolor: '#1d4ed8' }, borderRadius: 2, ml: 1, p: '10px' }} aria-label="send message"><Send /></Button>
+          <TextField
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Ask Jai anything..."
+            multiline
+            maxRows={5}
+            fullWidth
+            variant="standard"
+            InputProps={{ disableUnderline: true, sx: { p: 1, color: darkMode ? '#fff' : '#000' } }}
+          />
+          <Button
+            onClick={handleSend}
+            disabled={loading || !input.trim()}
+            variant="contained"
+            sx={{ bgcolor: '#2563eb', '&:hover': { bgcolor: '#1d4ed8' }, borderRadius: 2, ml: 1, p: '10px' }}
+            aria-label="send message"
+          >
+            <Send />
+          </Button>
         </Box>
 
         {/* Footer */}
         <Typography variant="caption" sx={{ mt: 2, textAlign: 'center', color: darkMode ? '#9ca3af' : '#6b7280' }}>
-          Created by <a href="https://jairisys.tech" target="_blank" rel="noopener noreferrer" style={{ color: darkMode ? '#60a5fa' : '#2563eb' }}>Jairisys.tech</a>, Creafted with ❤️.
+          Created by <a href="https://jairisys.tech" target="_blank" rel="noopener noreferrer" style={{ color: darkMode ? '#60a5fa' : '#2563eb' }}>Jairisys.tech</a>, Crafted with ❤️.
         </Typography>
       </Box>
     </Box>
