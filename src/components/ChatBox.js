@@ -2,10 +2,10 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import {
   Button, TextField, Box, Typography, IconButton,
-  List, ListItem, ListItemText, ListItemButton, Divider, Tooltip
+  List, ListItem, ListItemText, ListItemButton, Divider, Tooltip, Drawer, useMediaQuery, useTheme
 } from '@mui/material';
 import {
-  Brightness4, Brightness7, ContentCopy, Send, Check, Add, Delete, Logout, Menu
+  Brightness4, Brightness7, ContentCopy, Send, Check, Add, Delete, Logout, Menu, ChevronLeft
 } from '@mui/icons-material';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -46,7 +46,7 @@ const CodeBlock = ({ language, code }) => {
   };
   return (
     <Box sx={{ position: 'relative', my: 1, bgcolor: '#0d1117', borderRadius: 2, overflow: 'hidden' }}>
-      <SyntaxHighlighter language={language} style={vscDarkPlus} customStyle={{ margin: 0, padding: '16px' }}>
+      <SyntaxHighlighter language={language} style={vscDarkPlus} customStyle={{ margin: 0, padding: '12px', fontSize: '12px' }}>
         {code}
       </SyntaxHighlighter>
       <IconButton onClick={handleCopyCode} sx={{ position: 'absolute', top: 4, right: 4, color: '#e0e0e0' }}>
@@ -62,24 +62,22 @@ const CodeBlock = ({ language, code }) => {
 const GPTTyping = () => {
   return (
     <Box sx={{
-      display: 'flex', alignItems: 'center', gap: 1, mb: 2,
-      pl: 2, py: 1, bgcolor: '#222', borderRadius: 2, width: 'fit-content'
+      display: 'flex', alignItems: 'center', gap: 0.5, mb: 1,
+      pl: 1, py: 0.5, bgcolor: '#222', borderRadius: 1, width: 'fit-content'
     }}>
-      <Box sx={{
-        display: 'flex', alignItems: 'center', gap: 0.5,
-      }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
         <GPTDot delay={0} />
         <GPTDot delay={0.3} />
         <GPTDot delay={0.6} />
       </Box>
-      <Typography variant="body2" sx={{ color: '#a3e635', fontWeight: 500 }}>Jai is typing...</Typography>
+      <Typography variant="body2" sx={{ color: '#a3e635', fontWeight: 500, fontSize: '12px' }}>Jai is typing...</Typography>
     </Box>
   );
 };
 
 const GPTDot = ({ delay }) => (
   <Box sx={{
-    width: 8, height: 8, borderRadius: '50%', bgcolor: '#a3e635',
+    width: 6, height: 6, borderRadius: '50%', bgcolor: '#a3e635',
     animation: `gptBlink 1.2s infinite ${delay}s`,
     '@keyframes gptBlink': {
       '0%': { opacity: 1 },
@@ -99,8 +97,11 @@ export default function ChatBox() {
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
   const [showTyping, setShowTyping] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // State for sidebar toggle
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Default open for desktop
+  const [isMiniSidebar, setIsMiniSidebar] = useState(false); // Mini state for desktop
   const chatEndRef = useRef(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const fetchConversations = useCallback(async () => {
     if (!currentUser) return;
@@ -201,7 +202,11 @@ export default function ChatBox() {
   };
 
   const toggleSidebar = () => {
-    setIsSidebarOpen(prev => !prev);
+    if (isMobile) {
+      setIsSidebarOpen(prev => !prev);
+    } else {
+      setIsMiniSidebar(prev => !prev);
+    }
   };
 
   const renderMessage = (msg, index) => {
@@ -210,101 +215,115 @@ export default function ChatBox() {
     const bgColor = isUser ? (darkMode ? '#2563eb' : '#dbeafe') : (darkMode ? '#374151' : '#e5e7eb');
     const color = isUser ? (darkMode ? '#fff' : '#1e3a8a') : (darkMode ? '#e5e7eb' : '#1f2937');
     return (
-      <Box key={index} sx={{ display: 'flex', justifyContent: align, mb: 2 }}>
-        <Box sx={{ maxWidth: '80%', bgcolor: bgColor, color, p: 2, borderRadius: 2, boxShadow: 1 }}>
+      <Box key={index} sx={{ display: 'flex', justifyContent: align, mb: 1 }}>
+        <Box sx={{ maxWidth: '90%', bgcolor: bgColor, color, p: 1, borderRadius: 1, boxShadow: 1 }}>
           {msg.parts.map((part, i) =>
             part.type === 'code'
               ? <CodeBlock key={i} language={part.language} code={part.content} />
-              : <Typography key={i} variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>{part.content}</Typography>
+              : <Typography key={i} variant="body2" sx={{ whiteSpace: 'pre-wrap', fontSize: '14px' }}>{part.content}</Typography>
           )}
-          <Typography variant="caption" sx={{ display: 'block', textAlign: 'right', mt: 1, color: darkMode ? '#9ca3af' : '#6b7280' }}>{msg.timestamp}</Typography>
+          <Typography variant="caption" sx={{ display: 'block', textAlign: 'right', mt: 0.5, color: darkMode ? '#9ca3af' : '#6b7280', fontSize: '10px' }}>{msg.timestamp}</Typography>
         </Box>
       </Box>
     );
   };
 
   return (
-    <Box sx={{ height: '100vh', display: 'flex', bgcolor: darkMode ? '#111827' : '#f3f4f6' }}>
+    <Box sx={{ height: '100vh', display: 'flex', bgcolor: darkMode ? '#111827' : '#f3f4f6', overflow: 'hidden' }}>
       {/* Sidebar */}
-      <Box
+      <Drawer
+        variant={isMobile ? 'temporary' : 'persistent'}
+        open={isMobile ? isSidebarOpen : !isMiniSidebar}
+        onClose={toggleSidebar}
         sx={{
-          width: { xs: isSidebarOpen ? '260px' : '0', sm: isSidebarOpen ? '260px' : '0' },
-          bgcolor: darkMode ? '#1f2937' : '#fff',
-          color: darkMode ? '#e5e7eb' : '#1f2937',
-          p: isSidebarOpen ? 1 : 0,
-          borderRight: isSidebarOpen ? `1px solid ${darkMode ? '#374151' : '#e5e7eb'}` : 'none',
-          display: 'flex',
-          flexDirection: 'column',
-          transition: 'width 0.3s ease-in-out',
-          overflowX: 'hidden',
-          position: { xs: 'absolute', sm: 'relative' },
-          zIndex: 1200,
-          height: '100%',
+          width: isMobile ? '70%' : (isMiniSidebar ? 60 : 260),
+          flexShrink: 0,
+          '& .MuiDrawer-paper': {
+            width: isMobile ? '70%' : (isMiniSidebar ? 60 : 260),
+            boxSizing: 'border-box',
+            bgcolor: darkMode ? '#1f2937' : '#fff',
+            color: darkMode ? '#e5e7eb' : '#1f2937',
+            borderRight: !isMobile && !isMiniSidebar ? `1px solid ${darkMode ? '#374151' : '#e5e7eb'}` : 'none',
+            height: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            transition: 'width 0.3s ease-in-out',
+          },
+        }}
+        ModalProps={{
+          keepMounted: true,
+          onBackdropClick: () => setIsSidebarOpen(false), // Close on backdrop click for mobile
+          style: { overflow: 'hidden' }, // Prevent body scroll on mobile
         }}
       >
-        {isSidebarOpen && (
-          <>
-            <Button onClick={handleNewChat} startIcon={<Add />} variant="outlined" sx={{ mb: 2, color: 'inherit', borderColor: 'inherit' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+          <Box sx={{ p: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Button onClick={handleNewChat} startIcon={<Add />} variant="outlined" sx={{ mb: 0, color: 'inherit', borderColor: 'inherit', fontSize: '14px' }}>
               New Chat
             </Button>
-            <Divider sx={{ bgcolor: darkMode ? '#374151' : '#e5e7eb' }} />
-            <List sx={{ flexGrow: 1, overflowY: 'auto' }}>
-              {conversations.map(convo => (
-                <ListItem key={convo._id} disablePadding sx={{ my: 0.5 }}>
-                  <ListItemButton
-                    onClick={() => {
-                      handleSelectConversation(convo._id);
-                      setIsSidebarOpen(false); // Close sidebar on mobile after selection
-                    }}
-                    selected={currentConversationId === convo._id}
-                    sx={{ borderRadius: 1, '&.Mui-selected': { bgcolor: darkMode ? '#374151' : '#e5e7eb' } }}
+            {!isMobile && (
+              <IconButton onClick={toggleSidebar} sx={{ color: darkMode ? '#fff' : '#000' }}>
+                <ChevronLeft />
+              </IconButton>
+            )}
+          </Box>
+          <Divider sx={{ bgcolor: darkMode ? '#374151' : '#e5e7eb' }} />
+          <List sx={{ flexGrow: 1, overflowY: 'auto', maxHeight: 'calc(100vh - 140px)' }}>
+            {conversations.map(convo => (
+              <ListItem key={convo._id} disablePadding sx={{ my: 0.5 }}>
+                <ListItemButton
+                  onClick={() => {
+                    handleSelectConversation(convo._id);
+                    if (isMobile) setIsSidebarOpen(false);
+                  }}
+                  selected={currentConversationId === convo._id}
+                  sx={{ borderRadius: 1, '&.Mui-selected': { bgcolor: darkMode ? '#374151' : '#e5e7eb' }, py: 0.5 }}
+                >
+                  <ListItemText primary={convo.title} primaryTypographyProps={{ noWrap: true, sx: { pr: 4, fontSize: '14px' } }} />
+                  <IconButton
+                    onClick={(e) => handleDeleteConversation(e, convo._id)}
+                    size="small"
+                    sx={{ position: 'absolute', right: 8, color: darkMode ? '#9ca3af' : '#6b7280' }}
                   >
-                    <ListItemText primary={convo.title} primaryTypographyProps={{ noWrap: true, sx: { pr: 4 } }} />
-                    <IconButton
-                      onClick={(e) => handleDeleteConversation(e, convo._id)}
-                      size="small"
-                      sx={{ position: 'absolute', right: 8, color: darkMode ? '#9ca3af' : '#6b7280' }}
-                    >
-                      <Tooltip title="Delete Chat">
-                        <Delete fontSize="small" />
-                      </Tooltip>
-                    </IconButton>
-                  </ListItemButton>
-                </ListItem>
-              ))}
-            </List>
-            <Divider sx={{ bgcolor: darkMode ? '#374151' : '#e5e7eb' }} />
-            <Box sx={{ p: 2 }}>
-              <Typography variant="body2" noWrap title={currentUser?.email || currentUser?.phoneNumber}>
-                {currentUser?.email || currentUser?.phoneNumber || 'Logged In'}
-              </Typography>
-              <Button
-                fullWidth
-                variant="text"
-                startIcon={<Logout />}
-                onClick={handleLogout}
-                sx={{ color: darkMode ? '#f87171' : '#ef4444', justifyContent: 'flex-start', mt: 1, p: 1 }}
-              >
-                Logout
-              </Button>
-            </Box>
-          </>
-        )}
-      </Box>
+                    <Tooltip title="Delete Chat">
+                      <Delete fontSize="small" />
+                    </Tooltip>
+                  </IconButton>
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+          <Divider sx={{ bgcolor: darkMode ? '#374151' : '#e5e7eb' }} />
+          <Box sx={{ p: 1 }}>
+            <Typography variant="body2" noWrap title={currentUser?.email || currentUser?.phoneNumber} sx={{ fontSize: '12px' }}>
+              {currentUser?.email || currentUser?.phoneNumber || 'Logged In'}
+            </Typography>
+            <Button
+              fullWidth
+              variant="text"
+              startIcon={<Logout />}
+              onClick={handleLogout}
+              sx={{ color: darkMode ? '#f87171' : '#ef4444', justifyContent: 'flex-start', mt: 0.5, p: 0.5, fontSize: '12px' }}
+            >
+              Logout
+            </Button>
+          </Box>
+        </Box>
+      </Drawer>
 
       {/* Chat Area */}
-      <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: { xs: 1, sm: 2 } }}>
+      <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: { xs: 0.5, sm: 2 }, width: '100%', overflow: 'hidden' }}>
         {/* Header */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, px: 0.5 }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <IconButton
               onClick={toggleSidebar}
-              sx={{ color: darkMode ? '#fff' : '#000', mr: 1 }}
+              sx={{ color: darkMode ? '#fff' : '#000', mr: 0.5 }}
               aria-label={isSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
             >
               <Menu />
             </IconButton>
-            <Typography variant="h5" sx={{ fontWeight: 'bold', color: darkMode ? '#fff' : '#000' }}>
+            <Typography variant="h6" sx={{ fontWeight: 'bold', color: darkMode ? '#fff' : '#000', fontSize: { xs: '16px', sm: '20px' } }}>
               Jai - Coding Assistant
             </Typography>
           </Box>
@@ -314,9 +333,9 @@ export default function ChatBox() {
         </Box>
 
         {/* Messages */}
-        <Box sx={{ flexGrow: 1, overflowY: 'auto', p: { xs: 2, sm: 3 }, bgcolor: darkMode ? '#1f2937' : '#fff', borderRadius: 2, mb: 2, boxShadow: 1 }}>
+        <Box sx={{ flexGrow: 1, overflowY: 'auto', p: { xs: 1, sm: 3 }, bgcolor: darkMode ? '#1f2937' : '#fff', borderRadius: 2, mb: 1, boxShadow: 1, maxWidth: '100%' }}>
           {messages.length === 0 && !loading && (
-            <Typography sx={{ textAlign: 'center', color: darkMode ? '#9ca3af' : '#6b7280', fontStyle: 'italic' }}>
+            <Typography sx={{ textAlign: 'center', color: darkMode ? '#9ca3af' : '#6b7280', fontStyle: 'italic', fontSize: '12px' }}>
               Start a new conversation or select one from the history.
             </Typography>
           )}
@@ -326,23 +345,23 @@ export default function ChatBox() {
         </Box>
 
         {/* Input */}
-        <Box sx={{ display: 'flex', alignItems: 'center', bgcolor: darkMode ? '#374151' : '#fff', borderRadius: 2, p: 1, boxShadow: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', bgcolor: darkMode ? '#374151' : '#fff', borderRadius: 2, p: 0.5, boxShadow: 1, mb: 1 }}>
           <TextField
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Ask Jai anything..."
             multiline
-            maxRows={5}
+            maxRows={3}
             fullWidth
             variant="standard"
-            InputProps={{ disableUnderline: true, sx: { p: 1, color: darkMode ? '#fff' : '#000' } }}
+            InputProps={{ disableUnderline: true, sx: { p: 0.5, color: darkMode ? '#fff' : '#000', fontSize: '14px' } }}
           />
           <Button
             onClick={handleSend}
             disabled={loading || !input.trim()}
             variant="contained"
-            sx={{ bgcolor: '#2563eb', '&:hover': { bgcolor: '#1d4ed8' }, borderRadius: 2, ml: 1, p: '10px' }}
+            sx={{ bgcolor: '#2563eb', '&:hover': { bgcolor: '#1d4ed8' }, borderRadius: 2, ml: 0.5, p: '6px', minWidth: '40px' }}
             aria-label="send message"
           >
             <Send />
@@ -350,7 +369,7 @@ export default function ChatBox() {
         </Box>
 
         {/* Footer */}
-        <Typography variant="caption" sx={{ mt: 2, textAlign: 'center', color: darkMode ? '#9ca3af' : '#6b7280' }}>
+        <Typography variant="caption" sx={{ mt: 1, textAlign: 'center', color: darkMode ? '#9ca3af' : '#6b7280', fontSize: '10px', pb: 1 }}>
           Created by <a href="https://jairisys.tech" target="_blank" rel="noopener noreferrer" style={{ color: darkMode ? '#60a5fa' : '#2563eb' }}>Jairisys.tech</a>, Crafted with ❤️.
         </Typography>
       </Box>
