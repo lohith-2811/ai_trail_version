@@ -107,9 +107,14 @@ export default function ChatBox() {
     if (!currentUser) return;
     try {
       const res = await api.get('/conversations');
-      setConversations(res.data);
+      if (res.data && Array.isArray(res.data)) {
+        setConversations(res.data);
+      } else {
+        setConversations([]);
+      }
     } catch (error) {
       console.error("Failed to fetch conversations", error);
+      setConversations([]);
     }
   }, [currentUser]);
 
@@ -252,8 +257,8 @@ export default function ChatBox() {
         }}
         ModalProps={{
           keepMounted: true,
-          onBackdropClick: () => setIsSidebarOpen(false), // Close on backdrop click for mobile
-          style: { overflow: 'hidden' }, // Prevent body scroll on mobile
+          onBackdropClick: () => setIsSidebarOpen(false),
+          style: { overflow: 'hidden' },
         }}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -268,30 +273,34 @@ export default function ChatBox() {
             )}
           </Box>
           <Divider sx={{ bgcolor: darkMode ? '#374151' : '#e5e7eb' }} />
-          <List sx={{ flexGrow: 1, overflowY: 'auto', maxHeight: 'calc(100vh - 140px)' }}>
-            {conversations.map(convo => (
-              <ListItem key={convo._id} disablePadding sx={{ my: 0.5 }}>
-                <ListItemButton
-                  onClick={() => {
-                    handleSelectConversation(convo._id);
-                    if (isMobile) setIsSidebarOpen(false);
-                  }}
-                  selected={currentConversationId === convo._id}
-                  sx={{ borderRadius: 1, '&.Mui-selected': { bgcolor: darkMode ? '#374151' : '#e5e7eb' }, py: 0.5 }}
-                >
-                  <ListItemText primary={convo.title} primaryTypographyProps={{ noWrap: true, sx: { pr: 4, fontSize: '14px' } }} />
-                  <IconButton
-                    onClick={(e) => handleDeleteConversation(e, convo._id)}
-                    size="small"
-                    sx={{ position: 'absolute', right: 8, color: darkMode ? '#9ca3af' : '#6b7280' }}
+          <List sx={{ flexGrow: 1, overflowY: 'auto', maxHeight: 'calc(100vh - 140px)', p: 0 }}>
+            {conversations.length > 0 ? (
+              conversations.map(convo => (
+                <ListItem key={convo._id} disablePadding sx={{ my: 0.5 }}>
+                  <ListItemButton
+                    onClick={() => {
+                      handleSelectConversation(convo._id);
+                      if (isMobile) setIsSidebarOpen(false);
+                    }}
+                    selected={currentConversationId === convo._id}
+                    sx={{ borderRadius: 1, '&.Mui-selected': { bgcolor: darkMode ? '#374151' : '#e5e7eb' }, py: 0.5 }}
                   >
-                    <Tooltip title="Delete Chat">
-                      <Delete fontSize="small" />
-                    </Tooltip>
-                  </IconButton>
-                </ListItemButton>
-              </ListItem>
-            ))}
+                    <ListItemText primary={convo.title} primaryTypographyProps={{ noWrap: true, sx: { pr: 4, fontSize: '14px' } }} />
+                    <IconButton
+                      onClick={(e) => handleDeleteConversation(e, convo._id)}
+                      size="small"
+                      sx={{ position: 'absolute', right: 8, color: darkMode ? '#9ca3af' : '#6b7280' }}
+                    >
+                      <Tooltip title="Delete Chat">
+                        <Delete fontSize="small" />
+                      </Tooltip>
+                    </IconButton>
+                  </ListItemButton>
+                </ListItem>
+              ))
+            ) : (
+              <Typography sx={{ p: 1, color: darkMode ? '#9ca3af' : '#6b7280', fontSize: '12px' }}>No conversations yet.</Typography>
+            )}
           </List>
           <Divider sx={{ bgcolor: darkMode ? '#374151' : '#e5e7eb' }} />
           <Box sx={{ p: 1 }}>
